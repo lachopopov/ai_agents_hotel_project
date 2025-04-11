@@ -1,0 +1,11 @@
+{
+    "docker_lines": [],
+    "graphs": {
+        "hotel_reservation_mas": "./hotel_reservation_mas.py:graph"
+    },
+    "env": "./.env",
+    "python_version": "3.11",
+    "dependencies": [
+        "."
+    ]
+}
