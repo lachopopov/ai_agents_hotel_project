@@ -1,16 +1,13 @@
 # Standard library imports
 import logging
-import sqlite3
 from datetime import datetime
 import os
 from random import random
 from typing import Literal
 
 # Third-party imports
-import chromadb
-from chromadb.utils.embedding_functions import OpenAIEmbeddingFunction
+from db import init_db
 from dotenv import load_dotenv
-from langchain_chroma import Chroma
 from langchain_community.agent_toolkits import SQLDatabaseToolkit
 from langchain_community.utilities import SQLDatabase
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
@@ -22,123 +19,34 @@ from langgraph.errors import NodeInterrupt
 from langgraph.graph import MessagesState, START, StateGraph
 from langgraph.prebuilt import ToolNode, tools_condition
 from langgraph.pregel import RetryPolicy
+import sqlitecloud
+from vector_db import init_vectorstore
 
 # Load environment variables from .env file
 load_dotenv()
 
-#connect to SQLite DB
-conn = sqlite3.connect('hotel.db')
-cursor = conn.cursor()
-
-# Create the rooms table
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS rooms (
-        room_number INTEGER PRIMARY KEY,
-        room_type TEXT NOT NULL,
-        price REAL NOT NULL,
-        max_capacity INTEGER NOT NULL,
-        amenities TEXT
-    )
-''')
-
-# Create the reservations table
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS reservations (
-        reservation_id INTEGER PRIMARY KEY AUTOINCREMENT,
-        guest_name TEXT NOT NULL,
-        room_number INTEGER NOT NULL,
-        start_date DATE NOT NULL,
-        end_date DATE NOT NULL,
-        FOREIGN KEY (room_number) REFERENCES rooms(room_number)
-    )
-''')
-
-# Example data for rooms
-rooms_data = [
-    (101, 'Single', 100, 1, 'TV, Wi-Fi'),
-    (102, 'Double', 150, 2, 'TV, Wi-Fi, Balcony'),
-    (103, 'Suite', 250, 3, 'TV, Wi-Fi, Balcony, Jacuzzi'),
-    (104, 'Deluxe', 200, 2, 'TV, Wi-Fi, Mini-bar'),
-    (105, 'Family Suite', 300, 4,
-     'TV, Wi-Fi, Balcony, Kitchenette'),
-    (106, 'Executive Suite', 350, 2,
-     'TV, Wi-Fi, Balcony, Jacuzzi, City View'),
-    (107, 'Double', 150, 2, 'TV, Wi-Fi'),
-    (108, 'Deluxe', 200, 2, 'TV, Wi-Fi, Balcony, Fireplace')
-]
-
-# Insert the data
-cursor.executemany('INSERT OR IGNORE INTO rooms VALUES (?, ?, ?, ?, ?)',
-                   rooms_data)
-
-reservations_data = [
-    ('Alice Smith', 102, '2025-03-15', '2025-03-18'),
-    ('Bob Johnson', 105, '2025-04-22', '2025-04-25'),
-    ('Charlie Brown', 106, '2025-06-10', '2025-06-12')
-]
-
-# Insert the data
-cursor.executemany('''INSERT INTO reservations (guest_name, room_number,
-                   start_date, end_date) VALUES (?, ?, ?, ?)''',
-                   reservations_data)
-
-conn.commit()
+# Open the connection to SQLite Cloud
+conn = sqlitecloud.connect(os.getenv('SQLITE_CLOUD_URL'))
+# Initialize the database
+init_db(conn)
 conn.close()
+
+
+
+# initialize the memory saver
+memory = MemorySaver()
 
 # Create an instance of LLM of your choice
 llm = ChatOpenAI(model="gpt-4o-mini", api_key=os.getenv('OPENAI_API_KEY'),
                       temperature=0)
 
 # define our db as a set of sql tools
-db = SQLDatabase.from_uri("sqlite:///hotel.db")
+db = SQLDatabase.from_uri(os.getenv('SQLITE_CLOUD_URL'))
 toolkit = SQLDatabaseToolkit(db=db, llm=llm)
 sql_tools = toolkit.get_tools()
 
-# write compliance rules to the file and read it back
-with open('compliance.txt', 'w') as file:
-    file.write('''The system should refuse
-               or redirect queries with:''')
-    file.write('''Illegal requests (e.g., falsifying documents,
-               fraudulent bookings).''')
-    file.write('''Hate speech, harassment, or explicit threats
-               toward individuals or groups.''')
-    file.write('''Offensive, obscene, or otherwise harmful content.''')
-    file.write('''Request of information about other guests. You cannot
-               share there names or dates of stay''')
-
-with open('compliance.txt', 'r') as file:
-    content = file.read()
-
-# Set up OpenAI embeddings
-embedding_function = OpenAIEmbeddingFunction(
-    api_key=os.getenv('OPENAI_API_KEY'),
-    model_name="text-embedding-ada-002"  # OpenAI's ada embeddings
-)
-
-# Initialize Chroma client with OpenAI embedding function
-client = chromadb.Client()
-collection = client.create_collection(
-    name="compliance_rules",
-    embedding_function=embedding_function
-)
-
-# Add documents to Chroma DB
-collection.add(
-    documents=[content],
-    ids=["compliance_rules"]
-)
-
-# Set up OpenAI embeddings
-openai_embeddings = OpenAIEmbeddings(
-    model="text-embedding-ada-002",
-    openai_api_key=os.getenv('OPENAI_API_KEY'))
-
-# Connect LangChain with your Chroma collection
-vectorstore = Chroma(
-    client=client,
-    collection_name="compliance_rules",
-    embedding_function=openai_embeddings
-)
+# Connect LangChain with your Pinecone index
+vectorstore = init_vectorstore()
 
 # create a custom tool
 @tool(response_format="content_and_artifact")
@@ -401,4 +309,4 @@ builder.add_conditional_edges(
 builder.add_edge("sql_tools", "reservation_assistant")
 builder.add_edge("rag_tools", "retriever")
 builder.add_edge("retriever", "conv_assistant")
-graph = builder.compile()
+graph = builder.compile(checkpointer=memory)

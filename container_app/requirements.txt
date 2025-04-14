@@ -3,9 +3,10 @@ langchain_openai
 langchain_pinecone
 langchain_core
 langchain_community
-langgraph-sdk
+langgraph_sdk
 pypdf
 fpdf
 python-dotenv
+gradio
 sqlalchemy-sqlitecloud
 pinecone

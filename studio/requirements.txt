@@ -7,4 +7,3 @@ chromadb
 pypdf
 fpdf
 python-dotenv
-gradio
