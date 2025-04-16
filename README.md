@@ -27,22 +27,38 @@ hotel_errors_handling
 └── README.md
 ```
 
-## Installation
+## Langgraph Server from the terminal (Sessions 2 & 3)
 
-To install the required dependencies, run:
+First, install Langgraph CLI (in memory):
 
 ```
-pip install -r requirements.txt
+pip install pip install --upgrade "langgraph-cli[inmem]"
 ```
 
-## Usage
+And after that start the server in the directory with langgraph.json:
 
-To use the project, import the necessary modules from the `src` package and utilize the provided functions and classes for error handling and model management.
+```
+langgraph dev
+```
 
-## Contributing
+After that you can connect your server to the WebUI in Langsmith with the link: https://smith.langchain.com/studio/baseUrl=<URL_OF_YOUR_LOCAL_SERVER>
 
-Contributions are welcome! Please feel free to submit a pull request or open an issue for any enhancements or bug fixes.
+## Langgraph Server from the terminal (Session 5)
 
-## License
+First, install Langgraph CLI:
 
-This project is licensed under the MIT License. See the LICENSE file for more details.
+```
+pip install -U langgraph-cli
+```
+
+After that build a docker image of the langgraph server:
+
+```
+langgraph build -t langgraph-server
+```
+
+After that build and launch your container app with:
+
+```
+docker compose up
+```

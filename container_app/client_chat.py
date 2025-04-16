@@ -1,5 +1,5 @@
+import gradio as gr
 from langgraph_sdk import get_sync_client
-import uuid
 
 def chat_with_agent(message, history) -> str:
   """
@@ -24,8 +24,6 @@ def chat_with_agent(message, history) -> str:
     pass
 
   return chunk.data["messages"][-1]["content"]
-
-import gradio as gr
 
 gr.ChatInterface(
     fn=chat_with_agent,
