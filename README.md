@@ -1,30 +1,43 @@
-# hotel_errors_handling/hotel_errors_handling/README.md
+# Building Multi-agent AI system for Hotel Reservations (Week 4)
 
-# Hotel Errors Handling Project
+This project is a part of Building Multi-agent AI system for Hotel Reservations Course (week 4).
 
-This project is designed to handle edge cases and errors in a hotel management system using Python. It utilizes the LangChain framework to manage various models and error handling mechanisms effectively.
+The main goal of this project is to learn LangGraph Server, LangSmith, Gradio and Docker for deployement of multi-agent systems developed using LangGraph framework.
 
 ## Project Structure
 
 ```
-hotel_errors_handling
-├── src
-│   ├── __init__.py
-│   ├── config
-│   │   ├── __init__.py
-│   │   └── dependencies.py
-│   ├── utils
-│   │   ├── __init__.py
-│   │   └── setup.py
-│   ├── models
-│   │   ├── __init__.py
-│   │   └── langchain_models.py
-│   └── handlers
-│       ├── __init__.py
-│       └── error_handlers.py
-├── requirements.txt
-├── setup.py
-└── README.md
+ai_agents_hotel_project
+├── studio
+│   ├── .env_example
+│   ├── hotel_reservation_mas.py
+│   ├── langgraph.json
+│   ├── requirements.txt
+├── studio_cloud
+│   ├── .env_example
+│   ├── hotel_reservation_mas.py
+│   ├── db.py
+│   ├── vector_db.py
+│   ├── client_app.ipynb
+│   ├── langgraph.json
+│   ├── requirements.txt
+├── web_app
+│   ├── .env_example
+│   ├── hotel_reservation_mas.py
+│   ├── db.py
+│   ├── vector_db.py
+│   ├── langgraph.json
+│   ├── requirements.txt
+└── container_app
+│   ├── .env_example
+│   ├── .DockerFile
+│   ├── docker-compose.yml
+│   ├── hotel_reservation_mas.py
+│   ├── db.py
+│   ├── vector_db.py
+│   ├── client_chat.py
+│   ├── langgraph.json
+│   ├── requirements.txt
 ```
 
 ## Langgraph Server from the terminal (Sessions 2 & 3)
